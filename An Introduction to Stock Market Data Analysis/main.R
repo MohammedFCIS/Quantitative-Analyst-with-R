@@ -121,3 +121,11 @@ head(stock_change)
 
 plot(as.zoo(stock_change), screens = 1, lty = 1:3, xlab = "Date", ylab = "Log Difference")
 legend("topleft", c("AAPL", "MSFT", "GOOG"), lty = 1:3, cex = 0.5)
+
+#----------------------------------------------------------------------------------
+
+# Moving Averages
+#quantmod allows for easily adding moving averages to charts, via the addSMA() function.
+
+candleChart(AAPL, up.col = "black", dn.col = "red", theme = "white")
+addSMA(n = 20)
