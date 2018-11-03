@@ -125,7 +125,21 @@ legend("topleft", c("AAPL", "MSFT", "GOOG"), lty = 1:3, cex = 0.5)
 #----------------------------------------------------------------------------------
 
 # Moving Averages
-#quantmod allows for easily adding moving averages to charts, via the addSMA() function.
+# quantmod allows for easily adding moving averages to charts, via the addSMA() function.
 
 candleChart(AAPL, up.col = "black", dn.col = "red", theme = "white")
+addSMA(n = 20)
+
+# increase the investigation period
+start <-  as.Date("2010-01-01")
+getSymbols(c("AAPL", "MSFT", "GOOG"), src = "yahoo", from = start, to = end)
+
+# The subset argument allows specifying the date range to view in the chart.
+# This uses xts style subsetting. Here, I'm using the idiom
+# 'YYYY-MM-DD/YYYY-MM-DD', where the date on the left-hand side of the / is
+# the start date, and the date on the right-hand side is the end date. If
+# either is left blank, either the earliest date or latest date in the
+# series is used (as appropriate). This method can be used for any xts
+# object, say, AAPL
+candleChart(AAPL, up.col = "black", dn.col = "red", theme = "white", subset = "2016-01-04/")
 addSMA(n = 20)
