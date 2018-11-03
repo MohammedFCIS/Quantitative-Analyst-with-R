@@ -44,3 +44,15 @@ head(AAPL)
 # stock splits (when the company makes each extant stock worth two 
 # and halves the price) and dividends (payout of company profits per share)
 # also affect the price of a stock and should be accounted for.
+#----------------------------------------------------------------------------------
+
+# Visualizing Stock Data
+plot(AAPL[, "AAPL.Close"], main = "AAPL")
+
+# A linechart is fine, but there are at least four variables involved for 
+# each date (open, high, low, and close), and we would like to have some visual
+# way to see all four variables that does not require plotting four separate lines.
+# Financial data is often plotted with a Japanese candlestick plot, so named because
+# it was first created by 18th century Japanese rice traders. 
+# Use the function candleChart() from quantmod to create such a chart.
+candleChart(AAPL, up.col = "black", dn.col = "red", theme = "white")
