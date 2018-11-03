@@ -143,3 +143,10 @@ getSymbols(c("AAPL", "MSFT", "GOOG"), src = "yahoo", from = start, to = end)
 # object, say, AAPL
 candleChart(AAPL, up.col = "black", dn.col = "red", theme = "white", subset = "2016-01-04/")
 addSMA(n = 20)
+
+# Traders are usually interested in multiple moving averages,
+# such as the 20-day, 50-day, and 200-day moving averages. 
+# It’s easy to examine multiple moving averages at once.
+
+candleChart(AAPL, up.col = "black", dn.col = "red", theme = "white", subset = "2016-01-04/")
+addSMA(n = c(20, 50, 200))
