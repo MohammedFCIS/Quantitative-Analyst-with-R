@@ -45,3 +45,31 @@ getSymbols("AAPL",
            src = "yahoo",
            from = start,
            to = end)
+
+# What is AAPL?
+class(AAPL)
+
+# Let's see the first few rows
+head(AAPL)
+
+candleChart(AAPL, up.col = "black", dn.col = "red", theme = "white", subset = "2016-01-04/")
+
+AAPL_sma_20 <- SMA(
+  Cl(AAPL),  # The closing price of AAPL, obtained by quantmod's Cl() function
+  n = 20     # The number of days in the moving average window
+)
+
+AAPL_sma_50 <- SMA(
+  Cl(AAPL),
+  n = 50
+)
+
+AAPL_sma_200 <- SMA(
+  Cl(AAPL),
+  n = 200
+)
+
+zoomChart("2016")  # Zoom into the year 2016 in the chart
+addTA(AAPL_sma_20, on = 1, col = "red")  # on = 1 plots the SMA with price
+addTA(AAPL_sma_50, on = 1, col = "blue")
+addTA(AAPL_sma_200, on = 1, col = "green")
