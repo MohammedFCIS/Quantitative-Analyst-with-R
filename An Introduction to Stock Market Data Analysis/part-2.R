@@ -235,3 +235,90 @@ print(data.frame(t(tStats[, -c(1,2)])))
 
 final_acct <- getAccount(account_st)
 plot(final_acct$summary$End.Eq["2010/2016"], main = "Portfolio Equity")
+#-----------------------------------------------------------------------------
+# Test on multiple markets
+#-----------------------------------------------------------------------------
+
+# Get new symbols
+symbols = c("AAPL", "MSFT", "GOOG", "FB", "TWTR", "NFLX", "AMZN", "YHOO",
+            "SNY", "NTDOY", "IBM", "HPQ")
+getSymbols(Symbols = symbols, from = start, to = end)
+# Quickly define adjusted versions of each of these
+`%s%` <- function(x, y) {paste(x, y)}
+`%s0%` <- function(x, y) {paste0(x, y)}
+for (s in symbols) {
+  eval(parse(text = s %s0% "_adj <- adjustOHLC(" %s0% s %s0% ")"))
+}
+symbols_adj <- paste(symbols, "adj", sep = "_")
+
+stock(symbols_adj, currency = "USD", multiplier = 1)
+
+strategy_st_2 <- portfolio_st_2 <- account_st_2 <- "SMAC-20-50_v2"
+rm.strat(portfolio_st_2)
+rm.strat(strategy_st_2)
+initPortf(portfolio_st_2, symbols = symbols_adj,
+          initDate = initDate, currency = "USD")
+initAcct(account_st_2, portfolios = portfolio_st_2,
+         initDate = initDate, currency = "USD",
+         initEq = 1000000)
+initOrders(portfolio_st_2, store = TRUE)
+
+strategy(strategy_st_2, store = TRUE)
+
+add.indicator(strategy = strategy_st_2, name = "SMA",
+              arguments = list(x = quote(Cl(mktdata)),
+                               n = 20),
+              label = "fastMA")
+add.indicator(strategy = strategy_st_2, name = "SMA",
+              arguments = list(x = quote(Cl(mktdata)),
+                               n = 50),
+              label = "slowMA")
+
+# Next comes trading signals
+add.signal(strategy = strategy_st_2, name = "sigComparison",  # Remember me?
+           arguments = list(columns = c("fastMA", "slowMA"),
+                            relationship = "gt"),
+           label = "bull")
+add.signal(strategy = strategy_st_2, name = "sigComparison",
+           arguments = list(columns = c("fastMA", "slowMA"),
+                            relationship = "lt"),
+           label = "bear")
+
+# Finally, rules that generate trades
+add.rule(strategy = strategy_st_2, name = "ruleSignal",
+         arguments = list(sigcol = "bull",
+                          sigval = TRUE,
+                          ordertype = "market",
+                          orderside = "long",
+                          replace = FALSE,
+                          prefer = "Open",
+                          osFUN = osMaxDollar,
+                          maxSize = quote(floor(getEndEq(account_st_2,
+                                                         Date = timestamp) * .1)),
+                          tradeSize = quote(floor(getEndEq(account_st_2,
+                                                           Date = timestamp) * .1))),
+         type = "enter", path.dep = TRUE, label = "buy")
+add.rule(strategy = strategy_st_2, name = "ruleSignal",
+         arguments = list(sigcol = "bear",
+                          sigval = TRUE,
+                          orderqty = "all",
+                          ordertype = "market",
+                          orderside = "long",
+                          replace = FALSE,
+                          prefer = "Open"),
+         type = "exit", path.dep = TRUE, label = "sell")
+
+applyStrategy(strategy_st_2, portfolios = portfolio_st_2)
+
+# Now for analytics
+updatePortf(portfolio_st_2)
+
+dateRange <- time(getPortfolio(portfolio_st_2)$summary)[-1]
+updateAcct(account_st_2, dateRange)
+updateEndEq(account_st_2)
+tStats2 <- tradeStats(Portfolios = portfolio_st_2, use="trades",
+                      inclZeroDays = FALSE)
+tStats2[, 4:ncol(tStats2)] <- round(tStats2[, 4:ncol(tStats2)], 2)
+print(data.frame(t(tStats2[, -c(1,2)])))
+final_acct2 <- getAccount(account_st_2)
+plot(final_acct2$summary$End.Eq["2010/2016"], main = "Portfolio Equity")
