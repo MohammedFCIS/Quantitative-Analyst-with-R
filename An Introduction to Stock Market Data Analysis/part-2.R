@@ -144,3 +144,94 @@ zoomChart("2014-05/2014-07")
 candleChart(adjustOHLC(AAPL), up.col = "black", dn.col = "red", theme = "white")
 addLines(h = 0, col = "black", on = 3)
 addSMA(n = c(20, 50), on = 1, col = c("red", "blue"))
+
+# Test strategy
+rm(list = ls(.blotter), envir = .blotter)  # Clear blotter environment
+currency("USD")  # Currency being used
+Sys.setenv(TZ = "MDT")  # Allows quantstrat to use timestamps
+# Next, we declare the stocks we are going to be working with.
+AAPL_adj <- adjustOHLC(AAPL)
+stock("AAPL_adj", currency = "USD", multiplier = 1)
+initDate <- "1990-01-01"  # A date prior to first close price; needed (why?)
+
+# Now we create a portfolio and account object that will be used in the simulation
+
+strategy_st <- portfolio_st <- account_st <- "SMAC-20-50"  # Names of objects
+rm.strat(portfolio_st)  # Need to remove portfolio from blotter env
+rm.strat(strategy_st)   # Ensure no strategy by this name exists either
+initPortf(portfolio_st, symbols = "AAPL_adj",  # This is a simple portfolio
+          # trading AAPL only
+          initDate = initDate, currency = "USD")
+initAcct(account_st, portfolios = portfolio_st,  # Uses only one portfolio
+         initDate = initDate, currency = "USD",
+         initEq = 1000000)  # Start with a million dollars
+initOrders(portfolio_st, store = TRUE)  # Initialize the order container; will
+# contain all orders made by strategy
+
+# Now we define the strategy
+strategy(strategy_st, store = TRUE)  # store = TRUE tells function to store in
+# the .strategy environment
+
+# Now define trading rules
+# Indicators are used to construct signals
+add.indicator(strategy = strategy_st, name = "SMA",     # SMA is a function
+              arguments = list(x = quote(Cl(mktdata)),  # args of SMA
+                               n = 20),
+              label = "fastMA")
+add.indicator(strategy = strategy_st, name = "SMA",
+              arguments = list(x = quote(Cl(mktdata)),
+                               n = 50),
+              label = "slowMA")
+# Next comes trading signals
+add.signal(strategy = strategy_st, name = "sigComparison",  # Remember me?
+           arguments = list(columns = c("fastMA", "slowMA"),
+                            relationship = "gt"),
+           label = "bull")
+add.signal(strategy = strategy_st, name = "sigComparison",
+           arguments = list(columns = c("fastMA", "slowMA"),
+                            relationship = "lt"),
+           label = "bear")
+
+# Finally, rules that generate trades
+add.rule(strategy = strategy_st, name = "ruleSignal",  # Almost always this one
+         arguments = list(sigcol = "bull",  # Signal (see above) that triggers
+                          sigval = TRUE,
+                          ordertype = "market",
+                          orderside = "long",
+                          replace = FALSE,
+                          prefer = "Open",
+                          osFUN = osMaxDollar,
+                          # The next parameter, which is a parameter passed to
+                          # osMaxDollar, will ensure that trades are about 10%
+                          # of portfolio equity
+                          maxSize = quote(floor(getEndEq(account_st,
+                                                         Date = timestamp) * .1)),
+                          tradeSize = quote(floor(getEndEq(account_st,
+                                                           Date = timestamp) * .1))),
+         type = "enter", path.dep = TRUE, label = "buy")
+add.rule(strategy = strategy_st, name = "ruleSignal",
+         arguments = list(sigcol = "bear",
+                          sigval = TRUE,
+                          orderqty = "all",
+                          ordertype = "market",
+                          orderside = "long",
+                          replace = FALSE,
+                          prefer = "Open"),
+         type = "exit", path.dep = TRUE, label = "sell")
+applyStrategy(strategy_st, portfolios = portfolio_st)
+
+# Here we effectvely conclude the study so we can perform some analytics.
+
+updatePortf(portfolio_st)
+dateRange <- time(getPortfolio(portfolio_st)$summary)[-1]
+updateAcct(portfolio_st, dateRange)
+updateEndEq(account_st)
+
+# Here’s our first set of useful summary statistics.
+tStats <- tradeStats(Portfolios = portfolio_st, use="trades",
+                     inclZeroDays = FALSE)
+tStats[, 4:ncol(tStats)] <- round(tStats[, 4:ncol(tStats)], 2)
+print(data.frame(t(tStats[, -c(1,2)])))
+
+final_acct <- getAccount(account_st)
+plot(final_acct$summary$End.Eq["2010/2016"], main = "Portfolio Equity")
