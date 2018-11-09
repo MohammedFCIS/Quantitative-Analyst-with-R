@@ -27,6 +27,14 @@ When someone criticizes a trading strategy for "trying to catch a falling knife"
 In fact, this course will teach you the basics of putting together such a strategy.
 `Both`
 
+## What is strategy?
+
+A strategy is a set of signals, applied to a chart.
+
+Signals systematically specify market entry or exit points according to a set of trading rules implemented in the signals' algorithms, and can be viewed as the basic building blocks of strategies.
+
+While signals can be based on the same formulas as indicators, signal calculations are substantially more complex and take in to account a far greater number of factors, such as trading costs, order generation priorities, and strategy performance measurements, that affect market entry and exit conditions. Signal algorithms utilize price action models and make use of backtesting concepts. Signal logic can make assumptions about price movement within bars that allow appropriate market entry and exit points to be determined when intra-bar data is not available. Signals compile strategy performance data and support backtesting and Automated Trade Execution.
+
 ## How to prevent overfitting
 
 When developing a trading system, a major pitfall that can creep into system development is the desire to find a strategy that worked phenomenally in the past. This is known as **overfitting**. Research by leading authors in the quantitative field has shown that not only is an overfitted system unlikely to generate profits in the future, but also that its performance can lead to losses.
