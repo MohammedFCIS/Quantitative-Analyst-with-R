@@ -1,0 +1,80 @@
+---
+title: "Trading Basics"
+author: "Mohammed Ali"
+date: "November 9, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(quantstrat)
+```
+
+## Identifying types of trading philosophies
+
+* Trend trading (also divergence or momentum), which is a bet that a quantity, such as a price, will keep moving in its current direction.
+
+* Reversion trading (also convergence, cycle, or oscillation), which is a bet that a quantity, such as a price, will reverse.
+
+* When someone says "the trend is your friend", which type of trading philosophy is he or she referring to?
+`Trend or momentum trading`
+
+* Believe it or not, the following phrase is used to describe strategies ranging from holding securities over months to holding securities over days. However, the basic hypothesis is the same.
+When someone criticizes a trading strategy for "trying to catch a falling knife", what type of strategy is he or she most likely referring to?
+`Reversion or oscillation trading`
+
+* Often on television, when someone sees a stock rise in price, more experienced talking heads will say: "Don't chase the price. Buy the dip." What philosophy are they referring to?
+In fact, this course will teach you the basics of putting together such a strategy.
+`Both`
+
+## How to prevent overfitting
+
+When developing a trading system, a major pitfall that can creep into system development is the desire to find a strategy that worked phenomenally in the past. This is known as **overfitting**. Research by leading authors in the quantitative field has shown that not only is an overfitted system unlikely to generate profits in the future, but also that its performance can lead to losses.
+
+The following steps can you take to reduce the chance of overfitting a trading system:
+
+* Examining the robustness of system performance.
+
+* Reducing the number of parameters in the trading system
+
+* Conducting tests to determine statistical significance of a strategy.
+
+## Plotting financial data
+Trading strategies developed using `quantstrat` contain several characteristics, including:
+
+* indicators developed from market data, 
+
+* signals triggered by certain combinations of indicators, 
+
+* and rules acted on by certain signals. 
+
+The first step in developing any trading system is to obtain market data, and maybe even examine how it looks.
+
+We will obtain data for **SPY**, an exchange traded fund (**ETF**) that tracks the top 500 companies in the United States by market cap. This data is from *Yahoo! Finance*, which is a sufficient source of data for strategies that do not require instantaneous "see the close, buy the close" execution. We will then plot it and add a trendline to it.
+
+```{r spy_review}
+# Get SPY from yahoo
+getSymbols("SPY", 
+           from = "2000-01-01", 
+           to = "2016-06-30", 
+           src =  "yahoo", 
+           adjust =  TRUE)
+
+# Plot the closing price of SPY
+plot(Cl(SPY))
+```
+
+
+## Adding indicators to financial data
+One of the most popular indicators to add to a trading strategy is the 200-day **simple moving average (SMA)**. This is a technical indicator of the average closing price of a stock over the past 200 days. Other moving averages can be of varying length, such as 50-day, 100-day, etc.
+
+Whenever the price is above the 200-day moving average, a whole assortment of good things usually happen, such as the asset appreciating in price, low volatility, and so on. Getting a long-lasting visual might shed light on why this indicator is mentioned so often.
+
+```{r spy_sma}
+# Plot the closing prices of SPY
+plot(Cl(SPY))
+
+# Add a 200-day SMA using lines()
+lines(SMA(Cl(SPY), n = 200), col = "red")
+```
+
