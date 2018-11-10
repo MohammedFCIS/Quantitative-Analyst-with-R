@@ -86,3 +86,97 @@ plot(Cl(SPY))
 lines(SMA(Cl(SPY), n = 200), col = "red")
 ```
 
+
+## Understanding initialization settings
+Let's get started with creating our first strategy in `quantstrat`. In this exercise, we will need to fill in three dates:
+
+* An initialization date for your backtest
+The initialization date must always come before the start of the data, otherwise there will be serious errors in the output of your backtest.
+
+* The start of your data
+
+* The end of your data
+
+We should also specify:
+
+* what time zone
+
+* and currency we will be working with with.
+
+The functions `Sys.setenv()` and `currency()` will be used for that purpose.
+
+```{r init_strategy}
+# Create initdate, from, and to strings
+initdate <- "1999-01-01"
+from <- "2003-01-01"
+to <- "2015-12-31"
+
+# Set the timezone to UTC
+Sys.setenv(TZ = "UTC")
+
+# Set the currency to USD 
+currency("USD")
+
+# Retrieve SPY from yahoo
+getSymbols("SPY", src = "yahoo", adjust = TRUE, from = from, to = to)
+
+# Use stock() to initialize SPY and set currency to USD
+stock("SPY", currency = "USD")
+```
+
+Let's continue the setup of our strategy.
+
+First, we will set a trade size of *100,000* USD in an object called `tradesize` which determines the amount you wager on each trade. 
+Second, we will set our initial equity to *100,000* USD in an object called `initeq`.
+
+`Quantstrat` requires three different objects to work: 
+
+* an account,
+An account is comprised of portfolios
+
+* a portfolio,
+A portfolio is comprised of strategies.
+
+* and a strategy.
+
+Finally, before proceeding, you must remove any existing strategies using the strategy removal command `rm.strat()` which takes in a string of the name of a strategy.
+
+```{r init_Strategy_2}
+# Define your trade size and initial equity
+tradesize <- 100000
+initeq <- 100000
+
+# Define the names of your strategy, portfolio and account
+strategy.st <- "firststrat"
+portfolio.st <- "firststrat"
+account.st <- "firststrat"
+
+# Remove the existing strategy if it exists
+rm.strat("firststrat")
+```
+
+Now that everything has been named, we must initialize the portfolio, the account, the orders, and the strategy to produce results.
+
+* The portfolio initialization `initPortf()` needs a portfolio string name, a vector for symbols used in the backtest, an initialization date initDate, and a currency.
+
+* The account initialization call `initAcct()` is identical to the portfolio initialization call except it takes an account string name instead of a new portfolio name, an existing portfolios name, and an initial equity initEq.
+
+* The orders initialization `initOrders()` needs a portfolio string portfolio and an initialization date initDate.
+
+* The strategy initialization `strategy()` needs a name of this new strategy and must have store set to TRUE.
+
+```{r init_Strategy_3}
+
+# Initialize the portfolio
+initPortf(portfolio.st, symbols = "SPY", initDate = initdate, currency = "USD")
+
+# Initialize the account
+initAcct(account.st, portfolios = portfolio.st, initDate = initdate, currency = "USD", initEq = initeq)
+
+# Initialize the orders
+initOrders(portfolio.st, initDate = initdate)
+
+# Store the strategy
+strategy(strategy.st, store = TRUE)
+```
+
