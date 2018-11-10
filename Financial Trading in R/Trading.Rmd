@@ -147,12 +147,14 @@ tradesize <- 100000
 initeq <- 100000
 
 # Define the names of your strategy, portfolio and account
+# Remove the existing strategy if it exists
+rm.strat("firststrat")
+
 strategy.st <- "firststrat"
 portfolio.st <- "firststrat"
 account.st <- "firststrat"
 
-# Remove the existing strategy if it exists
-rm.strat("firststrat")
+
 ```
 
 Now that everything has been named, we must initialize the portfolio, the account, the orders, and the strategy to produce results.
@@ -179,4 +181,182 @@ initOrders(portfolio.st, initDate = initdate)
 # Store the strategy
 strategy(strategy.st, store = TRUE)
 ```
+
+## Indicators
+An indicator is a transformation of market data that is used to generate signals or filter noise. Indicators form the backbone of many trading systems.
+
+**The simple moving average (SMA)** and **relative strength index (RSI)** are two classic indicators.
+SMA is an arithmetic moving average of past prices, while the RSI is a bounded oscillating indicator that ranges from 0 to 100. 
+Then we will visualize these indicators to understand why you might want to use the indicator and what it may represent. Recall that a trend indicator attempts to predict whether a price will continue in its current diretion, whereas a reversion indicator attempts to predict whether an increasing price will soon decrease, or the opposite.
+
+```{r indicators_1}
+# Create a 200-day SMA
+spy_sma <- SMA(Cl(SPY), n = 200)
+
+# Plot the closing prices of SPY
+plot(Cl(SPY))
+
+# Overlay a 200-day SMA
+lines(spy_sma, col = "red")
+
+# What kind of indicator?
+"trend"
+
+
+# Create an RSI with a 3-day lookback period
+spy_rsi <- RSI(Cl(SPY), n = 3)
+```
+
+
+The **Relative Strength Index (RSI)** is another indicator that rises with positive price changes and falls with negative price changes. It is equal to 100 - 100/(1 + RS), where RS is the average gain over average loss over the lookback period. At various lengths, this indicator can range from a reversion indicator, to a trend filter, or anywhere in between. There are various ways of computing the RSI.
+
+```{r rsi}
+# Plot the closing price of SPY
+plot(Cl(SPY))
+
+# Plot the RSI 2
+plot(RSI(Cl(SPY), n = 2))
+
+# What kind of indicator?
+"reversion"
+```
+
+### Implementing an indicator 
+At this point, it's time to start getting into the mechanics of implementing an indicator.
+
+```{r add_indicator_1}
+# Add a 200-day SMA indicator to strategy.st
+add.indicator(strategy = strategy.st, 
+              
+              # Add the SMA function
+              name = "SMA", 
+              
+              # Create a lookback period
+              arguments = list(x = quote(Cl(mktdata)), n = 200), 
+              
+              # Label your indicator SMA200
+              label = "SMA200")
+```
+
+Now, we'll make your strategy even more robust by adding a 50-day SMA. A fast moving average with a slower moving average is a simple and standard way to predict when prices in an asset are expected to rise in the future. While a single indicator can provide a lot of information, a truly robust trading system requires multiple indicators to operate effectively.
+
+
+```{r add_indicator_2}
+# Add a 50-day SMA indicator to strategy.st
+add.indicator(strategy = strategy.st, 
+              
+              # Add the SMA function
+              name = "SMA", 
+              
+              # Create a lookback period
+              arguments = list(x = quote(Cl(mktdata)), n = 50), 
+              
+              # Label your indicator SMA50
+              label = "SMA50")
+```
+
+In financial markets, the goal is to buy low and sell high. The RSI can predict when a price has sufficiently pulled back, especially with a short period such as 2 or 3.
+
+Here, we'll create a 3-period RSI, or RSI 3, to give you more practice in implementing pre-coded indicators. 
+
+```{r add_indicator_3}
+# Add an RSI 3 indicator to strategy.st
+add.indicator(strategy = strategy.st, 
+              
+              # Add the RSI 3 function
+              name = "RSI",
+              
+              # Create a lookback period
+              arguments = list(price = quote(Cl(mktdata)), n = 3), 
+              
+              # Label your indicator RSI_3
+              label = "RSI_3")
+```
+
+
+### Code our own indicator 
+So far, we've used indicators that have been completely pre-written for you by using the `add.indicator()` function. Now it's time to write and apply our own indicator.
+
+Our indicator function will calculate the average of two different indicators to create an RSI of 3.5. Here's how:
+
+* Take in a price series.
+
+* Calculate RSI 3.
+
+* Calculate RSI 4.
+
+* Return the average of RSI 3 and RSI 4.
+
+This RSI can be thought of as an RSI 3.5, because it's longer than an RSI 3 and shorter than an RSI 4. By averaging, this indicator takes into account the impact of four days ago while still being faster than a simple RSI 4, and also removes the noise of both RSI 3 and RSI 4.
+
+```{r cust_indic_1}
+# Write the calc_RSI_avg function
+calc_RSI_avg <- function(price, n1, n2) {
+  
+  # RSI 1 takes an input of the price and n1
+  RSI_1 <- RSI(price = price, n = n1)
+  
+  # RSI 2 takes an input of the price and n2
+  RSI_2 <- RSI(price = price, n = n2)
+  
+  # RSI_avg is the average of RSI_1 and RSI_2
+  RSI_avg <- (RSI_1 + RSI_2)/2
+  
+  # Your output of RSI_avg needs a column name of RSI_avg
+  colnames(RSI_avg) <- "RSI_avg"
+  return(RSI_avg)
+}
+
+# Add this function as RSI_3_4 to your strategy with n1 = 3 and n2 = 4
+add.indicator(strategy.st,
+name = "calc_RSI_avg",
+arguments = list(price = quote(Cl(mktdata)), n1 = 3, n2 = 4), label = "RSI_3_4")
+```
+
+
+While the RSI is decent, it is somewhat outdated as far as indicators go. So, we will code a simplified version of another indicator from scratch. The indicator is called the **David Varadi Oscillator (DVO)**, originated by David Varadi, a quantitative research director.
+
+The purpose of this oscillator is similar to something like the RSI in that it attempts to find opportunities to buy a temporary dip and sell in a temporary uptrend. In addition to obligatory market data, an oscillator function takes in two lookback periods.
+
+* First, the function computes a ratio between the closing price and average of high and low prices.
+
+* Next, it applies an SMA to that quantity to smooth out noise, usually on a very small time frame, such as two days. 
+
+* Finally, it uses the `runPercentRank()` function to take a running percentage rank of this average ratio, and multiplies it by 100 to convert it to a 0-100 quantity.
+
+Think about the way that students get percentile scores after taking a standardized test (that is, if a student got an 800 on her math section, she might be in the 95th percentile nationally). `runPercentRank()` does the same thing, except over time. This indicator provides the rank for the latest observation when taken in the context over some past period that the user specifies. For example, if something has a runPercentRank value of .90 when using a lookback period of 126, it means it's in the 90th percentile when compared to itself and the past 125 observations.
+
+```{r cust_indic_2}
+# Declare the DVO function
+DVO <- function(HLC, navg = 2, percentlookback = 126) {
+  
+  # Compute the ratio between closing prices to the average of high and low
+  ratio <- Cl(HLC)/((Hi(HLC) + Lo(HLC))/2)
+  
+  # Smooth out the ratio outputs using a moving average
+  avgratio <- SMA(ratio, n = navg)
+  
+  # Convert ratio into a 0-100 value using runPercentRank()
+  out <- runPercentRank(avgratio, n = percentlookback, exact.multiplier = 1) * 100
+  colnames(out) <- "DVO"
+  return(out)
+}
+# Add the DVO indicator to our strategy
+add.indicator(strategy = strategy.st, name = "DVO", 
+              arguments = list(HLC = quote(HLC(mktdata)), navg = 2, percentlookback = 126),
+              label = "DVO_2_126")
+```
+
+Let us test what we have did so far
+
+```{r test_indic}
+
+# Use applyIndicators to test out our indicators
+test <- applyIndicators(strategy = strategy.st, mktdata = OHLC(SPY))
+
+# Subset your data between Sep. 1 and Sep. 5 of 2013
+test_subset <- test["2013-09-01/2013-09-05"]
+test_subset
+```
+
 
