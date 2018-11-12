@@ -360,3 +360,54 @@ test_subset
 ```
 
 
+## Signals
+A signal is an interaction of market data with indicators, or indicators with other indicators, which tells you whether you may wish to buy or sell an asset. 
+
+Signals can be triggered for a variety of reasons. For example, a signal may be triggered by a shorter lookback moving average going from less than to greater than a longer lookback moving average. Another signal may be triggered when an oscillator goes from being above a certain set quantity (for example, 20) to below, and so on.
+
+### sigComparison
+A **sigComparison** signal is a simple and useful way to compare two (hopefully related) quantities, such as two moving averages. Often, a sigComparison signal does not create a buy or sell signal by itself (as such a signal would involve buying or selling on every such day), but is most often useful as a filter for when another buy or sell rule should be followed.
+
+We will use `sigComparison()` to generate a signal comparison that specifies that the *50-day* simple moving average (SMA) must be above the *200-day* simple moving average (SMA). We will label this signal *longfilter*, because it signals that the short-term average is above the long-term average.
+
+```{r sigComparison_longfilte}
+# Add a sigComparison which specifies that SMA50 must be greater than SMA200, call it longfilter
+add.signal(strategy.st, name = "sigComparison", 
+           
+           # We are interested in the relationship between the SMA50 and the SMA200
+           arguments = list(columns = c("SMA50", "SMA200"), 
+                            
+                            # Particularly, we are interested when the SMA50 is greater than the SMA200
+                            relationship = "gt"),
+           
+           # Label this signal longfilter
+           label = "longfilter")
+```
+
+### sigCrossover
+While having a long filter is necessary, it is not sufficient to put on a trade for this strategy. However, the moment the condition does not hold, the strategy should not hold any position whatsoever. 
+
+For this exercise, we will implement the opposite of the rule specified above using the `sigCrossover()` function.
+
+As opposed to `sigComparison()`, which will always state whether or not a condition holds, `sigCrossover()` only gives a positive the moment the signal first occurs, and then not again. This is useful for a signal that will be used to initiate a transaction, as we only want one transaction in most cases, rather than having transactions fire again and again.
+
+In this case, we will implement the `sigCrossover()` function specifying that the *SMA50* crosses under the *SMA200*.
+
+We will label this signal *filterexit*, as it will exit your position when the moving average filter states that the environment is not conducive for the strategy to hold a position.
+
+```{r sigCrossover_filterexit}
+# Add a sigCrossover which specifies that the SMA50 is less than the SMA200 and label it filterexit
+add.signal(strategy.st, name = "sigCrossover",
+           
+           # We're interested in the relationship between the SMA50 and the SMA200
+           arguments = list(columns = c("SMA50", "SMA200"),
+                            
+                            # The relationship is that the SMA50 crosses under the SMA200
+                            relationship = "lt"),
+           
+           # Label it filterexit
+           label = "filterexit")
+````
+
+
+
