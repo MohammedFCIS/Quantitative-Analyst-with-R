@@ -468,6 +468,40 @@ add.signal(strategy.st, name = "sigThreshold",
 
 ```
 
+### sigFormula
+The last signal function is a bit more open-ended. The `sigFormula()` function uses string evaluation to offer immense flexibility in combining various indicators and signals we already added to our strategy in order to create composite signals. 
+
+While such catch-all functionality may seem complicated at first, with proper signal implementation and labeling, a sigFormula signal turns out to be the simplest of logical programming statements encapsulated in some quantstrat syntactical structuring.
+
+```{r sigFormula_1}
+# Create dataset: test containing information about whether 
+# longfilter is equal to 1 AND longthreshold is equal to 1.
+test_init <- applyIndicators(strategy.st, mktdata = OHLC(SPY))
+test <- applySignals(strategy = strategy.st, mktdata = test_init)
+
+# Now, let's inspect the data set  on October 8, 2013. Are longfilter and longthreshold both equal to 1 on that date?
+test["2013-10-08"]
+```
+
+We approximated a *sigFormula* signal by comparing the value of two other signals. Next, we will take this one step futher by using the **sigFormula()** function to generate a sigFormula signal.
+
+We want to enter into a position when both *longfilter* and *longthreshold* become true at the same time.
+The idea is this: We don't want to keep entering into a position for as long as conditions hold true, but we do want to hold a position when there's a pullback in an uptrending environment.
+
+
+```{r sigFormula_2}
+# Add a sigFormula signal to your code specifying that both longfilter and longthreshold must be TRUE, label it longentry
+add.signal(strategy.st, name = "sigFormula",
+           
+           # Specify that longfilter and longthreshold must be TRUE
+           arguments = list(formula = "longfilter & longthreshold", 
+                            
+                            # Specify that cross must be TRUE
+                            cross = TRUE),
+           
+           # Label it longentry
+           label = "longentry")
+```
 
 
 
