@@ -503,6 +503,116 @@ add.signal(strategy.st, name = "sigFormula",
            label = "longentry")
 ```
 
+## Rules
+Rules are the final mechanic in the trinity of quantstrat mechanics -- *indicators*, *signals*, and *rules*. Rules are a way for you to specify exactly how you will shape your transaction once you decide you wish to execute on a signal.
+
+
+To understand this command, we will explore each argument individually.
+
+### sigcol
+First, `add.rule()` takes the argument `sigcol`, which specifies the signal column in your strategy. Like signals and indicators, all rules reference a column already present in your strategy. Rules relies on signals, and must therefore reference the signal columns in your strategy.
+
+### sigval
+The next argument to specify in `add.rule()` is `sigval`, or the value that your signal should take to trigger the rule.
+
+Remember that all signal outputs are either *1s* or *0s*. Effectively, a signal is either *"on"* or *"off" * at any given time. For our purposes, this is equivalent to two possible logical values:  `TRUE` or `FALSE`. When specifying sigval in our `add.rule()` command, we need to indicate whether the rule is triggered when the signal value is `TRUE` or `FALSE`.
+
+### orderqty
+The `orderqty` argument in the ruleSignal specifies exactly how much of an asset you want to buy or sell, in numbers of shares.
+
+However, one salient feature of the *exit* rule type is that you can reduce your position to zero instantly with the `all` argument (hence, exiting).
+
+### ordertype
+Next we specify the type of order you will execute `ordertype`.
+
+While there are multiple types of orders in quantstrat, we will stick to market orders `(ordertype = "market")`. A market order is an order that states that you will buy or sell the asset at the prevailing price, regardless of the conditions in the market. 
+
+An alternative type of orders is a `limit order`, which specifies that the transaction will only take place if certain price conditions are met (namely, if the price falls below a certain further threshold on the day of the order). The mechanics of limit orders are outside the scope of this course.
+
+### orderside
+The next critical argument to specify in our order is `orderside`, which can take two values: either `long` or `short`. In quantstrat, long and short side trades are siloed off separately so that quantstrat knows whether a trade is a long trade or a short trade. 
+
+A long trade -> is one that profits by buying an asset in the hopes that the asset's price will rise.
+A short trade -> is one that sells an asset before owning it, hoping to buy it back later at a lower price.
+
+For our strategy, you will want to take only long orders.
+
+### replace
+In quantstrat, the `replace` argument specifies whether or not to ignore all other signals on the same date when the strategy acts upon one signal. This is generally not a desired quality in a well-crafted trading system. Therefore, for our exit rule, you should set replace to `FALSE`.
+
+### prefer
+Lastly, of the basic rule arguments, there is the aspect of the `prefer` argument. In quantstrat, orders have a "next-bar" mechanism. That is, if you would gain a signal on Tuesday, the earliest that a position would actually fulfil itself would be on the Wednesday after. However, this can be solved by placing orders to execute on the next possible opening price, rather than wait for an entire day to pass before being able to actually purchase/sell the asset.
+
+```{r exit_rule}
+# Fill in the rule's type as exit
+add.rule(strategy.st, name = "ruleSignal", 
+         arguments = list(sigcol = "filterexit", sigval = TRUE, orderqty = "all", 
+                        ordertype = "market", orderside = "long", 
+                        replace = FALSE, prefer = "Open"), 
+         type = "exit")
+```
+
+### enter rule
+
+The opposite of an *exit* rule is an *enter* rule. On enter rules, orderqty cannot be set to "*all*" because there is no initial position on which to act. In this exercise, you will implement an enter rule that references the longentry signal in our strategy and will buy one share of an asset.
+
+```{r open_rule}
+# Create an entry rule of 1 share when all conditions line up to enter into a position
+add.rule(strategy.st, name = "ruleSignal", 
+         
+         # Use the longentry column as the sigcol
+         arguments=list(sigcol = "longentry", 
+                        
+                        # Set sigval to TRUE
+                        sigval = TRUE, 
+                        
+                        # Set orderqty to 1
+                        orderqty = 1,
+                        
+                        # Use a market type of order
+                        ordertype = "market",
+                        
+                        # Take the long orderside
+                        orderside = "long",
+                        
+                        # Do not replace other signals
+                        replace = FALSE, 
+                        
+                        # Buy at the next day's opening price
+                        prefer = "Open"),
+         
+         # This is an enter type rule, not an exit
+         type = "enter")
+```
+
+
+### order sizing 
+In quantstrat, the amount of an asset transacted may not always be a fixed quantity in regards to the actual shares. The constructs that allow quantstrat to vary the amount of shares bought or sold are called **order sizing functions**. 
+
+Using a pre-coded order sizing function is straightforward. The first thing to know is that when using an order sizing function, the `orderqty` argument is no longer relevant, as the order quantity is determined by the order sizing function.  We can build our own sizing function in another tutorial.
+
+Calling an order sizing function with our `add.rule()` call is fairly straightforward. The inputs for the order sizing function are mixed in with the rest of the inputs inside the arguments that we learnt in previous sections.
+
+We will use the `osFUN` argument to specify a function called `osMaxDollar`.
+
+The additional arguments to this function are `tradeSize` and `maxSize`, both of which should take `tradesize`, which you defined earlier.
+
+```{r order_size_function}
+# Add a rule that uses an osFUN to size an entry position
+add.rule(strategy = strategy.st, name = "ruleSignal",
+         arguments = list(sigcol = "longentry", sigval = TRUE, ordertype = "market",
+                          orderside = "long", replace = FALSE, prefer = "Open",
+                          
+                          # Use the osFUN called osMaxDollar
+                          osFUN = "osMaxDollar",
+                          
+                          # The tradeSize argument should be equal to tradesize (defined earlier)
+                          tradeSize = tradesize,
+                          
+                          # The maxSize argument should be equal to tradesize as well
+                          maxSize = tradesize),
+         type = "enter")
+```
 
 
 
