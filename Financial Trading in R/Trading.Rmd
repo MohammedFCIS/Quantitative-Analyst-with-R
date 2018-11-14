@@ -8,6 +8,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(quantstrat)
+library(IKTrading)
 ```
 
 ## Identifying types of trading philosophies
@@ -604,7 +605,7 @@ add.rule(strategy = strategy.st, name = "ruleSignal",
                           orderside = "long", replace = FALSE, prefer = "Open",
                           
                           # Use the osFUN called osMaxDollar
-                          osFUN = "osMaxDollar",
+                          osFUN = osMaxDollar,
                           
                           # The tradeSize argument should be equal to tradesize (defined earlier)
                           tradeSize = tradesize,
@@ -615,4 +616,130 @@ add.rule(strategy = strategy.st, name = "ruleSignal",
 ```
 
 
+## Running our strategy
+Our strategy uses three separate indicators and five separate signals. The strategy requires:
+
+* both the threshold of the `DVO_2_126` indicator to be under 20,
+
+* and the `SMA50` to be greater than the `SMA200`.
+
+The strategy *sells* when the `DVO_2_126` crosses above 80, or the `SMA50` crosses under the `SMA200`.
+
+For this strategy to work properly, We specified five separate signals:
+
+* *sigComparison* for `SMA50` being greater than `SMA200`;
+
+* *sigThreshold* with `cross` set to `FALSE` for `DVO_2_126` less than 20;
+
+* *sigFormula* to tie them together and set cross to `TRUE`;
+
+* *sigCrossover* with `SMA50` less than `SMA200`; and
+
+* *sigThreshold* with `cross` set to `TRUE` for `DVO_2_126` greater than 80.
+
+The strategy invests $100,000 (our `initeq`) into each trade, and may have some small dollar cost averaging if the `DVO_2_126` oscillates around 20 (though the effect is mostly negligible compared to the initial allocation).
+
+Now, we need to run our strategy and fill in some more boilerplate code to make sure quantstrat records everything. 
+
+```{r apply_strategy}
+# Use applyStrategy() to apply our strategy. Save this to out
+out <- applyStrategy(strategy = strategy.st, portfolios = portfolio.st)
+
+# Update our portfolio (portfolio.st)
+updatePortf(portfolio.st)
+daterange <- time(getPortfolio(portfolio.st)$summary)[-1]
+
+# Update our account (account.st)
+updateAcct(account.st, daterange)
+updateEndEq(account.st)
+```
+
+### Profit factor
+One of the most vital statistics of any systematic trading strategy is the **profit factor**. The profit factor is how many dollars you make for each dollar you lose. A profit factor above 1 means your strategy is profitable. A profit factor below 1 means you should head back to the drawing board.
+
+We will explore the profit factor in our strategy by creating an object called tstats that displays the trade statistics for our system.
+
+```{r Profit_Factor}
+# Get the tradeStats for your portfolio
+tstats <- tradeStats(Portfolios = portfolio.st)
+
+# Print the profit factor
+tstats$Profit.Factor
+```
+
+### Percent positive
+
+While profit factor is one important statistic, it may be heavily influenced by only a few good trades. The percent positive statistic lets us know how many of our trades were winners. A trading system based on oscillation trading (such as ours!) will likely have a high percentage of winners. This is certainly a statistic you should look for in our own trade statistics.
+
+```{r percent_positive}
+tstats$Percent.Positive
+```
+
+
+Perfect! This percent positive statistic means that approximately `r tstats$Percent.Positive` of our trades returned a positive result. That's a great start.
+
+### chart.Posn
+One of the most enlightening things about a trading system is exploring what positions it took over the course of the trading simulation, as well as when it had its profits and drawdowns. Looking at a picture of the performance can deliver a great deal of insight in terms of refining similar trading systems in the future.
+
+In order to do this, we will use the `chart.Posn()` function. This generates a crisp and informative visualization of the performance of your trading system over the course of the simulation.
+
+```{r chart_Posn}
+# Use chart.Posn to view our system's performance on SPY
+chart.Posn(Portfolio = portfolio.st, Symbol = "SPY")
+```
+
+#### Adding an indicator
+One of the more interesting things we can do with the `chart.Posn()` function is to superimpose indicators on top of it. This can help show what the strategy has actually been doing and why. However, in order to do this, we will need to recalculate the indicators outside the scope of your strategy. Once this is done, we simply add them to the *chart.Posn* plot.
+
+Now, we will add the three indicators from your strategy to the *chart.Posn* plot we just created. The two moving averages (*SMA50* and *SMA200*) will be superimposed on the price series, while the *DVO_2_126* will have its own window.
+
+```{r chart_indicators}
+# Compute the SMA50
+sma50 <- SMA(x = Cl(SPY), n = 50)
+
+# Compute the SMA200
+sma200 <- SMA(x = Cl(SPY), n = 200)
+
+# Compute the DVO_2_126 with an navg of 2 and a percentlookback of 126
+dvo <- DVO(HLC = HLC(SPY), navg = 2, percentlookback = 126)
+
+# Recreate the chart.Posn of the strategy from the previous exercise
+chart.Posn(Portfolio = portfolio.st, Symbol = "SPY")
+
+# Overlay the SMA50 on our plot as a blue line
+add_TA(sma50, on = 1, col = "blue")
+
+# Overlay the SMA200 on our plot as a red line
+add_TA(sma200, on = 1, col = "red")
+
+# Add the DVO_2_126 to the plot in a new window
+add_TA(dvo)
+```
+
+The plot may look a bit complicated, but only because it contains so much vital information about your portfolio performance.
+
+### Cash Sharpe ratio
+When working with cash profit and loss statistics, *quantstrat* offers a way to compute a Sharpe ratio not just from returns, but from the actual profit and loss statistics themselves. A *Sharpe ratio* is a metric that compares the average reward to the average risk taken. Generally, a Sharpe ratio above 1 is a marker of a strong strategy.
+
+Now. we will see that because of trading P&L (profit and loss), one can compute a Sharpe ratio based on these metrics. The code below can be used to compute the Sharpe ratio based off of P&L.
+
+```{r sharp_ratio}
+portpl <- .blotter$portfolio.firststrat$summary$Net.Trading.PL
+SharpeRatio.annualized(portpl, geometric=FALSE)
+```
+
+As a *Sharpe ratio* above 1 is indicative of a strong strategy. The Sharpe ratio identified here is a bit low.
+
+### Returns Sharpe
+One of the main reasons to include an initial equity (in this case, initeq, which is set to 100,000) in our strategy is to be able to work with returns, which are based off of our profit and loss over our initial equity.
+
+Now, we will compute the standard returns-based Sharpe ratio as well.
+
+```{r sharp_return}
+# Get instrument returns
+instrets <- PortfReturns(portfolio.st)
+
+# Compute Sharpe ratio from returns
+SharpeRatio.annualized(instrets, geometric = FALSE)
+```
 
