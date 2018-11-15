@@ -24,7 +24,22 @@ This tutorials aims to:
 
 * and to illustrate on real-life examples of equity portfolios and asset allocation problems. 
 
+## Data
+The following data sets will be used through the tutorial
+
 ```{r get_Data}
+# Data for the Apple and Microsoft Stock
+aapl <- get.hist.quote(instrument="AAPL",start=as.Date("2005-12-31"),end=Sys.Date(),quote="AdjClose",quiet=T)
+msft <- get.hist.quote(instrument="MSFT",start=as.Date("2005-12-31"),end=Sys.Date(),quote="AdjClose",quiet=T)
+
+# Data for S&P 500
+sp500 <- get.hist.quote(instrument="^GSPC",start=as.Date("1985-12-31"),end=Sys.Date(),quote="AdjClose",quiet=T,compression="d")
+
+# Data on US Equities and bonds 
+eq_prices <- get.hist.quote(instrument="SPY",start=as.Date("2003-12-31"),end=as.Date("2016-06-30"),quote="AdjClose",quiet=T,compression="m")
+bond_prices <- get.hist.quote(instrument="AGG",start=as.Date("2003-12-31"),end=as.Date("2016-06-30"),quote="AdjClose",quiet=T,compression="m")
+eq_prices <- eq_prices/as.numeric(eq_prices[1])
+bond_prices <-  bond_prices/as.numeric(bond_prices[1])
 
 ```
 
