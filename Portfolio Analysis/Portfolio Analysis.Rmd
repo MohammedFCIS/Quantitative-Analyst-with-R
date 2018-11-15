@@ -1,0 +1,31 @@
+---
+title: "Portfolio Analysis"
+author: "Mohammed Ali"
+date: "November 15, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tseries)
+library(xts)
+library(tseries)
+```
+
+## Introduction
+
+A golden rule in investing is to always test the portfolio strategy on historical data, and, once you are trading the strategy, to constantly monitor its performance.
+
+This tutorials aims to:
+
+* learn how to estimate the portfolio weights that optimally balance risk and return,
+
+* combine portfolio theory with the practice in R,
+
+* and to illustrate on real-life examples of equity portfolios and asset allocation problems. 
+
+```{r get_Data}
+
+```
+
+
