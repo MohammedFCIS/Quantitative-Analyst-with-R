@@ -44,3 +44,14 @@ bond_prices <-  bond_prices/as.numeric(bond_prices[1])
 ```
 
 
+## The building blocks
+Asset returns and portfolio weights; those are the building blocks of a portfolio return. 
+
+## Analyzing performance
+The history of portfolio returns reveals valuable information about how much the investor can expect to gain or lose.
+
+## Performance drivers
+In addition to studying portfolio performance based on the observed portfolio return series, it is relevant to find out how individual (expected) returns, volatilities and correlations interact to determine the total portfolio performance.
+
+## Optimizing the portfolio
+We have up to now considered the portfolio weights as given. Now, we learn how to determine in R the portfolio weights that are optimal in terms of achieving a target return with minimum variance, while satisfying constraints on the portfolio weights.
