@@ -89,4 +89,25 @@ summary(weights)
   barplot(weights)
 ```
 
+## Calculation of portfolio returns
+A portfolio return is calculated by taking the sum of simple returns multiplied by the portfolio weights. Remember that simple returns are calculated as the final value minus the initial value, divided by initial value.
+
+```{r porto_Return}
+# Vector of initial value of the assets
+in_values <- c(1000, 5000, 2000)
+  
+# Vector of final values of the assets
+fin_values <- c(1100, 4500, 3000)
+
+# Weights as the proportion of total value invested in each assets
+weights <- in_values/sum(in_values)
+
+# Vector of simple returns of the assets 
+returns <- (fin_values - in_values) / in_values
+  
+# Compute portfolio return using the portfolio return formula
+preturns <- sum(weights * returns)
+```
+
+Note that the weighted average portfolio return equals the percentage change in the total portfolio value. Remember that portfolio returns are calculated by taking the sum of simple returns, multiplied by the portfolio weights.
 
