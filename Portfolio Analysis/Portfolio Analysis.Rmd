@@ -70,4 +70,23 @@ weights <- values / sum(values)
 weights
 ```
 
+There is also One of the most commonly used portfolios in investing is the equally weighted portfolio. This means that you choose to invest an equal amount of capital in each asset.
+
+## The weights of a market capitalization weighted portfolio
+In a market capitalization weighted portfolio, the weights are given by the individual assets' market capitalization (or market value), divided by the sum of the market capitalizations of all assets. A typical example is the S&P 500 portfolio invested in the 500 largest companies listed on the US stock exchanges (NYSE, Nasdaq). Note that by dividing by the sum of asset values across all portfolio assets, the portfolio weights sum to unity (one).
+
+```{r market_weights}
+# Define marketcaps
+marketcaps <- c(5, 8, 9, 20, 25, 100, 100, 500, 700, 2000)
+  
+# Compute the weights
+weights <- marketcaps / sum(marketcaps)
+  
+# Inspect summary statistics
+summary(weights)
+  
+# Create a barplot of weights
+  barplot(weights)
+```
+
 
