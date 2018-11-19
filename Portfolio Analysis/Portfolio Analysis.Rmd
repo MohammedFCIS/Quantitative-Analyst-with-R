@@ -55,3 +55,19 @@ In addition to studying portfolio performance based on the observed portfolio re
 
 ## Optimizing the portfolio
 We have up to now considered the portfolio weights as given. Now, we learn how to determine in R the portfolio weights that are optimal in terms of achieving a target return with minimum variance, while satisfying constraints on the portfolio weights.
+
+## Calculating portfolio weights when component values are given
+We can easily compute portfolio weights if we have a given amount of money invested in certain assets. If you want to start investing in a portfolio but we have budget restraints, we can also impose weights yourself. Depending on what these are, we will invest a certain amount of money in each of the assets based on their weight.
+
+```{r calc_wreights}
+# Define the vector values
+values <- c(4000, 4000, 2000)
+
+# Define the vector weights
+weights <- values / sum(values)
+
+# Print the resulting weights
+weights
+```
+
+
